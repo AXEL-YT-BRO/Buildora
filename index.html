@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buildora | Advanced Build Studio</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-panel: #18181b;
+            --bg-editor: #0f0f11;
+            --border: #27272a;
+            --primary: #6366f1; /* Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --accent: #8b5cf6; /* Purple */
+            --text-main: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: #3f3f46 transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo i { color: var(--primary); }
+        .badge {
+            font-size: 0.65rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-grow: 1;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        textarea#userPrompt {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            padding: 1rem;
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            resize: none;
+            height: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea#userPrompt:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Status Panel */
+        .status-panel {
+            margin-top: auto;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .status-dot.active {
+            background-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-dot.success {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.2s;
+        }
+
+        .powered-by {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            text-align: right;
+            opacity: 0.7;
+        }
+
+        /* --- Main Content Area --- */
+        .workspace {
+            flex: 1;
+            display: flex;
+        }
+
+        /* Middle Panel: Code Editor */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-editor);
+            border-right: 1px solid var(--border);
+            position: relative;
+            min-width: 0; /* Prevent flex overflow */
+        }
+
+        .panel-header {
+            height: 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            background: var(--bg-panel);
+        }
+
+        .panel-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .line-numbers {
+            width: 40px;
+            background: var(--bg-editor);
+            border-right: 1px solid var(--border);
+            color: #52525b;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: var(--font-code);
+            font-size: 13px;
+            line-height: 1.5;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        textarea#codeEditor {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #d4d4d8; /* Code color */
+            font-family: var(--font-code);
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 10px;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+            tab-size: 2;
+        }
+
+        /* Right Panel: Preview */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #18181b;
+            min-width: 0;
+        }
+
+        .browser-chrome {
+            height: 40px;
+            background: #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            border-bottom: 1px solid #3f3f46;
+        }
+
+        .browser-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #f59e0b; }
+        .dot.green { background: #10b981; }
+
+        .browser-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .preview-container {
+            flex: 1;
+            background: white; /* Actual page bg */
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Utilities */
+        .hidden { display: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i>
+            <div>Buildora <span class="badge">PRO STUDIO</span></div>
+        </div>
+
+        <div class="control-group">
+            <label for="userPrompt">SYSTEM PROMPT</label>
+            <textarea id="userPrompt" placeholder="Describe the website you want to build...
+e.g. 'A futuristic landing page for a coffee shop with a dark theme and glowing buttons.'"></textarea>
+            
+            <button id="buildBtn" class="btn-primary">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span id="btnText">Start Building</span>
+            </button>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-header">
+                <span id="statusText">Idle</span>
+                <div id="statusDot" class="status-dot"></div>
+            </div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="powered-by">Powered by OpenRouter / Qwen</div>
+        </div>
+    </aside>
+
+    <!-- Workspace -->
+    <div class="workspace">
+        
+        <!-- Code Editor -->
+        <section class="editor-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-code"></i> Live Editor
+                </div>
+                <button id="copyBtn" class="action-btn">
+                    <i class="fa-regular fa-copy"></i> Copy Code
+                </button>
+            </div>
+            <div class="editor-container">
+                <div id="lineNumbers" class="line-numbers">1</div>
+                <textarea id="codeEditor" spellcheck="false" placeholder="// Generated code will appear here..."></textarea>
+            </div>
+        </section>
+
+        <!-- Live Preview -->
+        <section class="preview-panel">
+            <div class="browser-chrome">
+                <div class="browser-dots">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
+                <div class="browser-actions">
+                    <button id="downloadBtn" class="action-btn" title="Download HTML">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button id="fullscreenBtn" class="action-btn" title="Fullscreen">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="preview-container">
+                <iframe id="previewFrame" sandbox="allow-scripts allow-modals allow-forms allow-same-origin allow-popups"></iframe>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // Note: In a real production app, never expose API keys in client-side code.
+        const API_KEY = "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";
+        const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+        const MODEL = "qwen/qwen3-coder:free";
+
+        // --- DOM Elements ---
+        const buildBtn = document.getElementById('buildBtn');
+        const btnText = document.getElementById('btnText');
+        const promptInput = document.getElementById('userPrompt');
+        const codeEditor = document.getElementById('codeEditor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const previewFrame = document.getElementById('previewFrame');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const progressFill = document.getElementById('progressFill');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        // --- State ---
+        let isBuilding = false;
+        let generatedCode = "";
+
+        // --- Event Listeners ---
+        buildBtn.addEventListener('click', startBuild);
+        
+        codeEditor.addEventListener('input', () => {
+            updateLineNumbers();
+            updatePreview(codeEditor.value); // Manual edit updates preview
+        });
+        
+        codeEditor.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = codeEditor.scrollTop;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(codeEditor.value);
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            setTimeout(() => copyBtn.innerHTML = originalHTML, 2000);
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const blob = new Blob([codeEditor.value], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'buildora-site.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (previewFrame.requestFullscreen) {
+                previewFrame.requestFullscreen();
+            }
+        });
+
+        // --- Core Logic ---
+
+        async function startBuild() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            // Reset UI
+            isBuilding = true;
+            setUIState('loading');
+            generatedCode = "";
+            codeEditor.value = "";
+            updateLineNumbers();
+            
+            // Construct System Prompt to enforce single file HTML
+            const systemInstruction = `
+            You are an expert web developer.
+            Task: Build a complete, functional website based on the user's description.
+            Constraints:
+            1. Output ONLY a single HTML file.
+            2. Include all CSS in <style> tags and JS in <script> tags.
+            3. Use CDN links for libraries (Tailwind, FontAwesome, etc.) if needed.
+            4. Do not output markdown blocks (like \`\`\`html). just the raw code.
+            5. Make the design modern, responsive, and visually stunning.
+            `;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://buildora.ai", 
+                        "X-Title": "Buildora Studio"
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [
+                            { role: "system", content: systemInstruction },
+                            { role: "user", content: [{ type: "text", text: prompt }] }
+                        ],
+                        stream: true
+                    })
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                // Handle Stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+                    
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the last partial line in buffer
+
+                    for (const line of lines) {
+                        if (line.trim() === '') continue;
+                        if (line.trim() === 'data: [DONE]') continue;
+                        
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const json = JSON.parse(line.slice(6));
+                                const delta = json.choices[0]?.delta?.content || "";
+                                
+                                if (delta) {
+                                    // Append Code
+                                    generatedCode += delta;
+                                    
+                                    // Clean Markdown immediately for display if it appears (basic check)
+                                    // Ideally the prompt prevents this, but regex helps.
+                                    const cleanDisplay = generatedCode.replace(/```html/g, '').replace(/```/g, '');
+                                    
+                                    codeEditor.value = cleanDisplay;
+                                    
+                                    // UI Updates
+                                    updateLineNumbers();
+                                    scrollToBottom();
+                                    
+                                    // Update Preview (Throttled ideally, but requested "simultaneously")
+                                    // We use a light cleanup for the preview execution
+                                    updatePreview(cleanDisplay);
+                                }
+                            } catch (e) {
+                                console.error("Error parsing stream:", e);
+                            }
+                        }
+                    }
+                }
+
+                setUIState('success');
+
+            } catch (error) {
+                console.error(error);
+                codeEditor.value = `// Error generating code:\n// ${error.message}`;
+                setUIState('error');
+            } finally {
+                isBuilding = false;
+            }
+        }
+
+        // --- Helper Functions ---
+
+        function updatePreview(htmlCode) {
+            // Strip potential markdown backticks that might break the iframe
+            let cleanHtml = htmlCode.replace(/```html/g, '').replace(/```/g, '');
+            previewFrame.srcdoc = cleanHtml;
+        }
+
+        function updateLineNumbers() {
+            const lines = codeEditor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+        }
+
+        function scrollToBottom() {
+            codeEditor.scrollTop = codeEditor.scrollHeight;
+            lineNumbers.scrollTop = codeEditor.scrollTop; // Sync
+        }
+
+        function setUIState(state) {
+            if (state === 'loading') {
+                buildBtn.disabled = true;
+                btnText.innerText = "Compiling...";
+                statusText.innerText = "Generating Code...";
+                statusDot.className = "status-dot active";
+                progressFill.style.width = "70%"; // Fake progress for UX
+                progressFill.style.transition = "width 10s linear";
+            } else if (state === 'success') {
+                buildBtn.disabled = false;
+                btnText.innerText = "Start Building";
+                statusText.innerText = "Ready";
+                statusDot.className = "status-dot success";
+                progressFill.style.transition = "width 0.3s ease";
+                progressFill.style.width = "100%";
+                setTimeout(() => { progressFill.style.width = "0%"; }, 1000);
+            } else if (state === 'error') {
+                buildBtn.disabled = false;
+                btnText.innerText = "Retry";
+                statusText.innerText = "Error";
+                statusDot.className = "status-dot red"; // We'd need to add red class or reuse dot styles
+                progressFill.style.width = "0%";
+            }
+        }
+    </script>
+</body>
+</html>
